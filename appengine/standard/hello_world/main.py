@@ -12,15 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import jinja2
 import webapp2
+import logging
+
+JINJA_ENVIRONMENT = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
+    extensions=['jinja2.ext.autoescape'],
+    autoescape=True)
+
+from flask import Flask
+app = Flask(__name__)
+app.config['DEBUG'] = True
+
+# Note: We don't need to call run() since our application is embedded within
+# the App Engine WSGI application server.
 
 
-class MainPage(webapp2.RequestHandler):
-    def get(self):
-        self.response.headers['Content-Type'] = 'text/plain'
-        self.response.write('Hello, World!')
+@app.route('/')
+def hello():
+    """Return a friendly HTTP greeting."""
+    template = JINJA_ENVIRONMENT.get_template('templates/index.html')
+    return template.render()
 
 
-app = webapp2.WSGIApplication([
-    ('/', MainPage),
-], debug=True)
+@app.errorhandler(404)
+def page_not_found(e):
+    """Return a custom 404 error."""
+    return 'Sorry, nothing at this URL.', 404
